@@ -16,21 +16,18 @@ router = APIRouter()
 
 @router.post("/shorten")
 def get_url(data: URLCreate, db:Session = Depends(get_db)):
-	code = short_code_generator()
-
 	'''
 	while code in db.short_code:
 		code = short_code_generator()
 	'''
 	#can't do stuuf like that on db which is a session, work on orm model instead which is upward projection of actual sql db
 
-	statement = select(URL).where(URL.short_code == code)
-
-	existing = db.scalar(statement) # basically returns the first row or None if there is no row
-
-	while existing: 
+	while True:
 		code = short_code_generator()
-		existing = db.scalar(statement)
+		statement = select(URL).where(URL.short_code == code)
+		existing = db.scalar(statement) # basically returns the first row or None if there is no row
+		if existing is None:
+			break
 
 	#db.add(code, data.url)
 
