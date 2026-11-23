@@ -33,8 +33,9 @@ def get_url(data: URLCreate, db:Session = Depends(get_db)):
 		except IntegrityError: # handling run condition and uniqueness of short_code
 			db.rollback() # doest undo commit or smtg, it makes db usable again from the the error state
 			
-	if not COMMITED_FLAG:
+	else:
 		raise RuntimeError("Failed to create URl")
+		
 	response = {}
 
 	response['short_code'] = code
