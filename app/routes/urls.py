@@ -5,7 +5,7 @@ from app.dependencies import get_db
 from app.schemas.url import URLCreate
 from app.models.url import URL
 from app.utils import short_code_generator
-
+from app.database import settings
 from sqlalchemy import select
 
 from fastapi.responses import RedirectResponse # to return a response of redirect
@@ -20,26 +20,26 @@ def get_url(data: URLCreate, db:Session = Depends(get_db)):
 
 	MAX_RETRIES = 5
 
-	for retry_index in range(MAX_RETRIES):
+	for _ in range(MAX_RETRIES):
 		code = short_code_generator()
 
 		orm_obj = URL()
 		orm_obj.short_code = code
-		orm_obj.original_url = data.url
+		orm_obj.original_url = str(data.url)
 		try: 
 			db.add(orm_obj)
 			db.commit()
 			break
 		except IntegrityError: # handling run condition and uniqueness of short_code
 			db.rollback() # doest undo commit or smtg, it makes db usable again from the the error state
-			
 	else:
-		raise RuntimeError("Failed to create URl")
-		
+		#raise RuntimeError("Failed to create URl")
+		raise HTTPException(status_code = 500, detail = "Failed to create URl")
+				
 	response = {}
 
 	response['short_code'] = code
-	response['short_url'] = f"http://127.0.0.1:8000/{code}"
+	response['short_url'] = f"{settings.base_url}/{code}"
 	response['original_url'] = str(data.url)
 
 	return response
